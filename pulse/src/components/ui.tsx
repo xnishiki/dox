@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { AlertCircle, KeyRound, Play, RotateCw } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useT } from '../i18n'
 import { JamendoError } from '../lib/jamendo'
@@ -78,6 +79,11 @@ export function ErrorState({ error, onRetry }: { error: Error; onRetry?: () => v
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-surface px-6 py-10 text-center">
       <Icon className="text-sun" size={28} />
       <p className="max-w-md text-[14px] text-muted">{noKey ? t('state.noKey') : `${t('state.error')}: ${error.message}`}</p>
+      {noKey && (
+        <Link to="/settings" className="bg-brand inline-flex h-10 items-center rounded-full px-5 text-[13.5px] font-bold text-[#1b1208]">
+          {t('state.openSettings')}
+        </Link>
+      )}
       {onRetry && !noKey && (
         <button onClick={onRetry} className="inline-flex items-center gap-2 rounded-full bg-elev px-4 py-2 text-[13px] font-semibold hover:bg-hover">
           <RotateCw size={14} /> {t('state.retry')}

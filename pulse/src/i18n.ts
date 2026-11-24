@@ -59,7 +59,8 @@ const ru = {
 
   'state.error': 'Не удалось загрузить',
   'state.retry': 'Повторить',
-  'state.noKey': 'Добавь ключ Jamendo в файл .env (VITE_JAMENDO_CLIENT_ID) и перезапусти приложение. Инструкция — в README.',
+  'state.noKey': 'Нужен бесплатный ключ Jamendo (Client ID): без него музыка не загружается. Получи его на devportal.jamendo.com и вставь в Настройки → Ключи сервисов.',
+  'state.openSettings': 'Открыть настройки',
   'state.soon': 'Этот раздел появится на одном из следующих этапов.',
 
   'library.liked': 'Любимые треки',
@@ -125,7 +126,8 @@ const en: Dict = {
   'toast.playNext': 'Will play next',
   'state.error': 'Failed to load',
   'state.retry': 'Retry',
-  'state.noKey': 'Add your Jamendo key to .env (VITE_JAMENDO_CLIENT_ID) and restart the app. See README.',
+  'state.noKey': 'A free Jamendo key (Client ID) is needed to load music. Get it at devportal.jamendo.com and paste it in Settings → Service keys.',
+  'state.openSettings': 'Open settings',
   'state.soon': 'This section arrives in one of the next stages.',
   'library.liked': 'Liked tracks',
   'library.empty': 'Nothing yet. Tap ♥ on any track.',
