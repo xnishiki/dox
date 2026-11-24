@@ -9,6 +9,7 @@ import { usePlaylists } from '../store/playlists'
 import { useUi } from '../store/ui'
 import { syncNow, useSync } from '../sync/sync'
 import { PlaylistCover } from './PlaylistCover'
+import { UpdateBadge } from './UpdateBadge'
 
 const items: Array<{ to: string; key: TKey; icon: typeof House }> = [
   { to: '/', key: 'nav.home', icon: House },
@@ -111,7 +112,10 @@ export function Sidebar() {
 
       <div className="border-t border-line pt-1.5">
         <AccountBox />
-        {link('/settings', t('nav.settings'), Settings)}
+        <div className="flex items-center gap-1">
+          <div className="min-w-0 flex-1">{link('/settings', t('nav.settings'), Settings)}</div>
+          <UpdateBadge />
+        </div>
       </div>
     </aside>
   )

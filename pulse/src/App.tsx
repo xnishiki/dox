@@ -10,6 +10,9 @@ import { QueuePanel } from './components/QueuePanel'
 import { Sidebar } from './components/Sidebar'
 import { TitleBar } from './components/TitleBar'
 import { Toast } from './components/Toast'
+import { UpdateToast } from './components/UpdateToast'
+import { takeJustUpdated } from './lib/version'
+import WhatsNew from './pages/WhatsNew'
 import { useHotkeys } from './hooks/useHotkeys'
 import { tr } from './i18n'
 import { setJamendoClientId, setJamendoQuality } from './lib/jamendo'
@@ -49,6 +52,12 @@ function useDeepLinks() {
   }, [navigate])
 }
 
+/** После обновления один раз открываем «Что нового» */
+function useWhatsNewOnce() {
+  const navigate = useNavigate()
+  useEffect(() => { if (takeJustUpdated()) navigate('/whats-new') }, [navigate])
+}
+
 export default function App() {
   const location = useLocation()
   const theme = useSettings((s) => s.theme)
@@ -58,6 +67,7 @@ export default function App() {
   const scrollRef = useRef<HTMLElement>(null)
   useHotkeys()
   useDeepLinks()
+  useWhatsNewOnce()
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -86,6 +96,7 @@ export default function App() {
                 <Route path="/playlist/:id" element={<Playlist />} />
                 <Route path="/library" element={<Library />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/whats-new" element={<WhatsNew />} />
                 <Route path="*" element={<Home />} />
               </Routes>
             </AnimatePresence>
@@ -98,6 +109,7 @@ export default function App() {
       <EqPanel />
       <ContextMenu />
       <Dialogs />
+      <UpdateToast />
       <Toast />
     </div>
   )

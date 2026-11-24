@@ -1,6 +1,8 @@
 import { Check, ExternalLink, FolderOpen } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Button, inputCls } from '../components/Modal'
+import { UpdatesSettings } from '../components/UpdatesSettings'
 import { Page, Segmented } from '../components/ui'
 import { useTr } from '../i18n'
 import { hasEnvJamendoKey, hasJamendoKey, setJamendoClientId } from '../lib/jamendo'
@@ -85,6 +87,11 @@ export default function Settings() {
   const signOut = useAuth((x) => x.signOut)
   const openDialog = useUi((x) => x.openDialog)
   const local = useLocal()
+  const location = useLocation()
+  // Переход из значка обновления: сразу к разделу «Обновления»
+  useEffect(() => {
+    if (location.hash === '#updates') setTimeout(() => document.getElementById('updates')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350)
+  }, [location.hash])
 
   const keys: Array<[string, string]> = [
     [L('Пробел', 'Space'), L('Пауза / играть', 'Play / pause')],
@@ -126,6 +133,10 @@ export default function Settings() {
             </div>
           ) : <span className="text-[12.5px] text-muted">{L('Только в приложении', 'Desktop app only')}</span>}
         </Row>
+      </Section>
+
+      <Section title={L('Обновления', 'Updates')}>
+        <UpdatesSettings />
       </Section>
 
       <Section title={L('Ключи сервисов', 'Service keys')}>

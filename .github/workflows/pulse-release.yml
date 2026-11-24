@@ -1,10 +1,11 @@
-name: Pulse — сборка .exe
+name: Pulse — сборка и релиз
 
 # Когда запускается:
-#  • пуш в ветку pulse — собирает установщик и portable-версию и кладёт их в ветку pulse-dist
-#    (файлы разбиты на части по 40 МБ — лимит GitHub на файл 100 МБ; склеить: см. README);
-#  • пуш тега вида v0.2.0 — то же самое плюс прикрепляет .exe к GitHub Release;
-#  • вручную: Actions → «Pulse — сборка .exe» → Run workflow.
+#  • пуш тега vX.Y.Z (или vX.Y.Z-beta.N) — сборка и публикация GitHub Release с файлами автообновления:
+#    установщик .exe, .exe.blockmap, latest.yml / beta.yml (без них автообновление не работает) и portable .exe.
+#    Текст релиза — раздел этой версии из pulse/CHANGELOG.md. Бета-версии публикуются как pre-release.
+#  • пуш в ветку pulse — тестовая сборка; .exe кладутся в ветку pulse-dist частями по 40 МБ.
+#  • вручную: Actions → «Pulse — сборка и релиз» → Run workflow (тестовая сборка).
 on:
   push:
     branches: [pulse]
@@ -17,7 +18,7 @@ permissions:
 
 concurrency:
   group: pulse-build-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref_type == 'branch' }}
 
 jobs:
   build-windows:
@@ -26,6 +27,8 @@ jobs:
       run:
         working-directory: pulse
         shell: bash
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
 
@@ -34,6 +37,27 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: pulse/package-lock.json
+
+      # ---------- проверки релиза: тег = версия из package.json, такой релиз ещё не публиковался ----------
+      - name: Проверить версию релиза
+        if: github.ref_type == 'tag'
+        id: rel
+        run: |
+          set -e
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "v$VERSION" ]; then
+            echo "::error::Тег $TAG не совпадает с версией в package.json ($VERSION). Выпускайте через npm run release."
+            exit 1
+          fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::Релиз $TAG уже опубликован — версию нужно поднять."
+            exit 1
+          fi
+          node scripts/changelog-notes.mjs "$VERSION" > "$(cygpath -u "$RUNNER_TEMP")/notes.md"
+          case "$VERSION" in *-*) echo "prerelease=true" >> "$GITHUB_OUTPUT" ;; *) echo "prerelease=false" >> "$GITHUB_OUTPUT" ;; esac
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "notes=$(cygpath -w "$RUNNER_TEMP")\\notes.md" >> "$GITHUB_OUTPUT"
 
       - name: Установка зависимостей
         run: set -o pipefail; npm ci --no-audit --no-fund 2>&1 | tee -a "$(cygpath -u "$RUNNER_TEMP")/build.log"
@@ -48,22 +72,48 @@ jobs:
           VITE_JAMENDO_CLIENT_ID: ${{ secrets.JAMENDO_CLIENT_ID }}
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        # --publish never: публикуем сами ниже, с текстом из CHANGELOG и без черновиков
         run: set -o pipefail; npm run dist 2>&1 | tee -a "$(cygpath -u "$RUNNER_TEMP")/build.log"
 
-      - name: Список файлов
-        run: ls -la release/*.exe && cd release && sha256sum *.exe | tee "$(cygpath -u "$RUNNER_TEMP")/SHA256SUMS"
+      - name: Файлы сборки
+        run: |
+          ls -la release/
+          test -f release/latest.yml || test -f release/beta.yml || { echo "::error::Нет latest.yml/beta.yml — автообновление не будет работать"; exit 1; }
+          ls release/*.blockmap >/dev/null || { echo "::error::Нет .blockmap — дифференциальные обновления не будут работать"; exit 1; }
+          cd release && sha256sum *.exe | tee "$(cygpath -u "$RUNNER_TEMP")/SHA256SUMS"
 
+      # ---------- релиз ----------
+      - name: Опубликовать GitHub Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Pulse ${{ steps.rel.outputs.version }}
+          body_path: ${{ steps.rel.outputs.notes }}
+          prerelease: ${{ steps.rel.outputs.prerelease }}
+          make_latest: ${{ steps.rel.outputs.prerelease == 'false' }}
+          fail_on_unmatched_files: false
+          files: |
+            pulse/release/Pulse-Setup-*.exe
+            pulse/release/Pulse-Setup-*.exe.blockmap
+            pulse/release/Pulse-Portable-*.exe
+            pulse/release/latest.yml
+            pulse/release/beta.yml
+            pulse/release/alpha.yml
+
+      # ---------- тестовые сборки из ветки ----------
       - name: Сохранить как артефакт
+        if: github.ref_type == 'branch'
         uses: actions/upload-artifact@v4
         with:
           name: Pulse-windows
-          path: pulse/release/*.exe
+          path: |
+            pulse/release/*.exe
+            pulse/release/*.yml
+            pulse/release/*.blockmap
           if-no-files-found: error
 
       - name: Выложить в ветку pulse-dist
         if: github.ref_type == 'branch'
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -e
           T="$(cygpath -u "$RUNNER_TEMP")"
@@ -73,6 +123,8 @@ jobs:
             split -b 40m -d -a 2 "$f" "$OUT/$(basename "$f").part"
           done
           cp "$T/SHA256SUMS" "$OUT/"
+          cp release/*.blockmap "$OUT/" 2>/dev/null || true
+          for y in release/*.yml; do case "$(basename "$y")" in builder-*) ;; *) cp "$y" "$OUT/" ;; esac; done
           printf 'status=success\ncommit=%s\nbuilt=%s\n' "$GITHUB_SHA" "$(date -u +%FT%TZ)" > "$OUT/BUILD_INFO"
           cd "$OUT"
           git init -q -b pulse-dist
@@ -84,8 +136,6 @@ jobs:
 
       - name: Выложить лог ошибки в ветку pulse-dist
         if: failure() && github.ref_type == 'branch'
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           T="$(cygpath -u "$RUNNER_TEMP")"
           OUT="$T/faillog"
@@ -99,10 +149,3 @@ jobs:
           git add -A
           git commit -q -m "Pulse build FAILED ${GITHUB_SHA::7}"
           git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:pulse-dist
-
-      - name: Приложить к релизу
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: pulse/release/*.exe
-          generate_release_notes: true

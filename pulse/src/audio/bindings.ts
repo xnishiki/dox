@@ -2,6 +2,7 @@ import { engine } from './engine'
 import { usePlayer } from '../store/player'
 import { pulse } from '../lib/platform'
 import { useTaste } from '../store/taste'
+import { consumeResumeFlag } from '../store/updates'
 import type { QueueItem } from '../store/player'
 
 /** Подключает звуковой движок к хранилищу, Media Session (медиаклавиши, уведомление Windows) и трею. Вызывается один раз. */
@@ -64,6 +65,14 @@ export function initAudioBindings() {
   if (cur) {
     engine.load(cur.src, s.position)
     sync({ duration: cur.duration, playing: false })
+    // Перезапуск ради обновления: продолжаем играть с той же секунды
+    if (consumeResumeFlag()) {
+      let started = false
+      const start = () => { if (!started) { started = true; engine.play().catch(() => {}) } }
+      if (s.position > 0.5) a.addEventListener('seeked', start, { once: true })
+      else a.addEventListener('canplay', start, { once: true })
+      setTimeout(start, 4000)
+    }
   }
 
   // --- Media Session: медиаклавиши и плитка управления в Windows ---

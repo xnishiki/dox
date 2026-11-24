@@ -1,0 +1,6 @@
+# Только для проверки автообновления в режиме разработки (см. README → «Проверить автообновление локально»).
+# Запуск: PULSE_DEV_UPDATE=1 npm run dev — приложение будет искать обновления здесь, как установленная версия.
+provider: github
+owner: xnishiki
+repo: dox
+updaterCacheDirName: pulse-updater

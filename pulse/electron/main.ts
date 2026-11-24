@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, Menu, nativeImage, session, shell, Tray } from 'electron'
 import path from 'node:path'
 import { handleLocalProtocol, registerLocalIpc, registerLocalScheme } from './local'
+import { hasPendingUpdate, initUpdater, onOnline } from './updater'
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL
 let win: BrowserWindow | null = null
@@ -115,12 +116,17 @@ function createWindow() {
   win.on('maximize', () => win?.webContents.send('win:maximized', true))
   win.on('unmaximize', () => win?.webContents.send('win:maximized', false))
 
-  // Крестик сворачивает в трей; полностью закрыть — через меню трея
+  // Крестик сворачивает в трей; полностью закрыть — через меню трея.
+  // Если обновление уже скачано («Позже»), крестик закрывает приложение — и обновление ставится.
   win.on('close', (e) => {
-    if (!quitting) {
-      e.preventDefault()
-      win?.hide()
+    if (quitting) return
+    if (hasPendingUpdate()) {
+      quitting = true
+      app.quit()
+      return
     }
+    e.preventDefault()
+    win?.hide()
   })
 
   // Внешние ссылки открываем в обычном браузере
@@ -143,6 +149,7 @@ ipcMain.handle('deeplink:pending', () => {
   return url
 })
 registerLocalIpc(() => win)
+ipcMain.on('net:online', () => onOnline())
 ipcMain.on('tray:update', (_e, state: { playing: boolean; title: string }) => {
   trayState = state
   buildTrayMenu()
@@ -155,6 +162,7 @@ app.whenReady().then(() => {
   allowCorsForMedia()
   createWindow()
   createTray()
+  initUpdater({ getWindow: () => win, beforeInstall: () => { quitting = true } })
 })
 
 app.on('window-all-closed', () => {

@@ -9,6 +9,7 @@ import { initAuth } from './store/auth'
 import { initEqBinding } from './store/eq'
 import { useSettings } from './store/settings'
 import { initSync } from './sync/sync'
+import { initUpdates } from './store/updates'
 import './index.css'
 
 // Ключи и качество — до первых запросов
@@ -22,6 +23,7 @@ initEqBinding()
 initFlow()
 initSync()
 initAuth()
+initUpdates()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

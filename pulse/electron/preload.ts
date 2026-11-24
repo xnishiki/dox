@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type { UpdateSettings, UpdateStatus } from './update-types'
 
 type Command = 'toggle' | 'next' | 'prev'
 
@@ -34,6 +35,22 @@ const extra = {
       const h = (_: unknown, p: { done: number; total: number }) => cb(p)
       ipcRenderer.on('local:progress', h)
       return () => { ipcRenderer.removeListener('local:progress', h) }
+    },
+  },
+  updates: {
+    getStatus: (): Promise<UpdateStatus> => ipcRenderer.invoke('update:getStatus'),
+    check: (): Promise<void> => ipcRenderer.invoke('update:check'),
+    download: (): Promise<void> => ipcRenderer.invoke('update:download'),
+    later: (): Promise<void> => ipcRenderer.invoke('update:later'),
+    install: (): Promise<void> => ipcRenderer.invoke('update:install'),
+    setSettings: (s: Partial<UpdateSettings>): Promise<void> => ipcRenderer.invoke('update:setSettings', s),
+    openRelease: (): Promise<void> => ipcRenderer.invoke('update:openRelease'),
+    openLogs: (): Promise<void> => ipcRenderer.invoke('update:openLogs'),
+    notifyOnline: () => ipcRenderer.send('net:online'),
+    onStatus: (cb: (s: UpdateStatus) => void) => {
+      const h = (_: unknown, s: UpdateStatus) => cb(s)
+      ipcRenderer.on('update:status', h)
+      return () => { ipcRenderer.removeListener('update:status', h) }
     },
   },
   deeplink: {

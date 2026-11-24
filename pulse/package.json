@@ -11,9 +11,13 @@
     "typecheck": "tsc --noEmit",
     "build:app": "vite build",
     "dist": "vite build && electron-builder --win nsis portable --publish never",
-    "icons": "python3 scripts/make-icons.py"
+    "icons": "python3 scripts/make-icons.py",
+    "release": "node scripts/release.mjs"
   },
-  "dependencies": {},
+  "dependencies": {
+    "electron-log": "^5.4.4",
+    "electron-updater": "^6.8.11"
+  },
   "devDependencies": {
     "@fontsource-variable/manrope": "^5.3.0",
     "@supabase/supabase-js": "^2.119.2",
@@ -73,11 +77,21 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Pulse",
-      "artifactName": "Pulse-Setup-${version}.${ext}"
+      "artifactName": "Pulse-Setup-${version}.${ext}",
+      "differentialPackage": true
     },
     "portable": {
       "artifactName": "Pulse-Portable-${version}.${ext}"
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "xnishiki",
+        "repo": "dox",
+        "releaseType": "release"
+      }
+    ],
+    "generateUpdatesFilesForAllChannels": true
   },
   "author": {
     "name": "Pulse"
