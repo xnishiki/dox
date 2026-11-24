@@ -101,7 +101,9 @@ function main() {
   fs.writeFileSync(changelogPath, changelog)
 
   git('add', 'package.json', 'package-lock.json', 'CHANGELOG.md')
-  git('commit', '-m', `Release Pulse ${tag}`)
+  // RELEASE_COMMIT_TRAILER — необязательные строки в конец сообщения коммита (например, Co-Authored-By)
+  const trailer = process.env.RELEASE_COMMIT_TRAILER ? `\n\n${process.env.RELEASE_COMMIT_TRAILER}` : ''
+  git('commit', '-m', `Release Pulse ${tag}${trailer}`)
   git('tag', '-a', tag, '-m', `Pulse ${next}`)
   const branch = git('rev-parse', '--abbrev-ref', 'HEAD')
   console.log(`Пушу ветку ${branch} и тег ${tag}…`)
