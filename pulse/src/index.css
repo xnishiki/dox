@@ -1,0 +1,173 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/manrope';
+
+/* Цвета темы — CSS-переменные, чтобы переключать тёмную/светлую без перерисовки классов */
+:root,
+[data-theme='dark'] {
+  --bg: #0f0f12;
+  --bg-2: #0a0a0d;
+  --surface: #17171c;
+  --elev: #1f1f26;
+  --hover: #26262e;
+  --line: rgb(255 255 255 / 0.07);
+  --fg: #f5f4f7;
+  --muted: #9b99a6;
+  --faint: #6b6976;
+  --glass: rgb(18 18 23 / 0.72);
+  --shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  --bg: #f6f5f2;
+  --bg-2: #eeece8;
+  --surface: #ffffff;
+  --elev: #f1efeb;
+  --hover: #e8e5df;
+  --line: rgb(20 18 30 / 0.08);
+  --fg: #17161c;
+  --muted: #625f6d;
+  --faint: #8c8996;
+  --glass: rgb(255 255 255 / 0.75);
+  --shadow: 0 10px 30px rgb(40 30 20 / 0.1);
+  color-scheme: light;
+}
+
+@theme inline {
+  --font-sans: 'Manrope Variable', 'Segoe UI', system-ui, sans-serif;
+  --color-bg: var(--bg);
+  --color-bg-2: var(--bg-2);
+  --color-surface: var(--surface);
+  --color-elev: var(--elev);
+  --color-hover: var(--hover);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-glass: var(--glass);
+  --color-sun: #ffc83d;
+  --color-ember: #ff6a3d;
+  --color-mint: #2ee59d;
+  --shadow-soft: var(--shadow);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-bg font-sans text-fg antialiased;
+    overflow: hidden;
+    user-select: none;
+  }
+  input,
+  textarea {
+    user-select: text;
+  }
+  button {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid #ffc83d;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .bg-brand {
+    background-image: linear-gradient(135deg, #ffc83d, #ff6a3d);
+  }
+  .text-brand {
+    background-image: linear-gradient(135deg, #ffc83d, #ff6a3d);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .glass {
+    background: var(--glass);
+    backdrop-filter: blur(24px) saturate(160%);
+  }
+  .drag {
+    -webkit-app-region: drag;
+  }
+  .no-drag {
+    -webkit-app-region: no-drag;
+  }
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface) 0%, var(--elev) 50%, var(--surface) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.3s ease-in-out infinite;
+  }
+  .scroll-area {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--hover) transparent;
+  }
+  .scroll-area::-webkit-scrollbar {
+    width: 10px;
+  }
+  .scroll-area::-webkit-scrollbar-thumb {
+    background: var(--hover);
+    border-radius: 10px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* В светлой теме жёлтый текст на белом плохо читается — делаем его темнее */
+[data-theme='light'] .text-sun {
+  color: #c97700;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Ползунки (прогресс, громкость) */
+.range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(to right, var(--range-fill, #ffc83d) var(--p, 0%), var(--hover) var(--p, 0%));
+  cursor: pointer;
+  transition: height 0.15s;
+}
+.range:hover {
+  height: 6px;
+  --range-fill: #ff8a3d;
+}
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.range:hover::-webkit-slider-thumb,
+.range:focus-visible::-webkit-slider-thumb {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

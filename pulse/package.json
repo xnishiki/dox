@@ -1,0 +1,81 @@
+{
+  "name": "pulse",
+  "productName": "Pulse",
+  "version": "0.1.0",
+  "description": "Pulse — десктопный музыкальный плеер",
+  "private": true,
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "dev:web": "vite --mode web",
+    "typecheck": "tsc --noEmit",
+    "build:app": "vite build",
+    "dist": "vite build && electron-builder --win nsis portable --publish never",
+    "icons": "python3 scripts/make-icons.py"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@fontsource-variable/manrope": "^5.3.0",
+    "@supabase/supabase-js": "^2.119.2",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0",
+    "framer-motion": "^14.14.0",
+    "lucide-react": "^1.79.0",
+    "music-metadata": "^12.8.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.7",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vite-plugin-electron": "^1.2.0",
+    "zustand": "^5.1.0"
+  },
+  "build": {
+    "appId": "app.pulse.music",
+    "productName": "Pulse",
+    "copyright": "Pulse",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**",
+      "dist-electron/**",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "build/tray.png",
+        "to": "tray.png"
+      }
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Pulse",
+      "artifactName": "Pulse-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Pulse-Portable-${version}.${ext}"
+    }
+  },
+  "author": {
+    "name": "Pulse"
+  }
+}
