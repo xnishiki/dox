@@ -69,7 +69,9 @@ function buildTrayMenu() {
 }
 
 function createTray() {
-  const icon = nativeImage.createFromPath(resource('tray.png'))
+  let icon = nativeImage.createFromPath(resource('tray.png'))
+  // Запасной вариант — иконка, вшитая в сам интерфейс
+  if (icon.isEmpty()) icon = nativeImage.createFromPath(path.join(__dirname, '..', 'dist', 'icon.png'))
   tray = new Tray(icon.isEmpty() ? nativeImage.createEmpty() : icon.resize({ width: 16, height: 16 }))
   tray.on('click', showWindow)
   buildTrayMenu()
